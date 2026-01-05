@@ -131,10 +131,9 @@ body {
 
 /* Outcomes / Bet Buttons */
 .event-outcomes {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
   gap: 0.5rem;
-  justify-content: flex-end;
 }
 
 .outcome-btn {
@@ -193,12 +192,8 @@ body {
     align-items: stretch;
   }
   
-  .event-outcomes {
-    justify-content: stretch;
-  }
-  
   .outcome-btn {
-    flex: 1;
+    min-width: unset;
   }
 }
 
@@ -258,6 +253,17 @@ body {
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.05em;
+}
+
+/* Hide nav labels on mobile, show icons only */
+@media (max-width: 640px) {
+  .nav-label {
+    display: none;
+  }
+  
+  .nav-item {
+    padding: 0.75rem 1rem;
+  }
 }
 
 /* Placeholder Content (My Bets page) */
