@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { dummyEvents } from "@/data/events";
 import { Event, Outcome } from "@/types/event";
 
@@ -14,6 +15,22 @@ function formatDate(dateString: string): string {
   });
 }
 
+/**
+ * Client-only date formatting component to prevent hydration errors.
+ * toLocaleDateString() produces different results on server vs client
+ * due to timezone/locale differences. By formatting only after mount,
+ * we ensure server and client render the same initial content.
+ */
+function FormattedDate({ dateString }: { dateString: string }) {
+  const [formatted, setFormatted] = useState<string>("");
+
+  useEffect(() => {
+    setFormatted(formatDate(dateString));
+  }, [dateString]);
+
+  return <>{formatted}</>;
+}
+
 function handleBet(event: Event, outcome: Outcome) {
   console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}`);
 }
@@ -24,7 +41,7 @@ function EventCard({ event }: { event: Event }) {
       <div className="event-info">
         <span className="event-category">{event.category}</span>
         <h2 className="event-name">{event.name}</h2>
-        <p className="event-date">{formatDate(event.date)}</p>
+        <p className="event-date"><FormattedDate dateString={event.date} /></p>
       </div>
       <div className="event-outcomes">
         {event.outcomes.map((outcome) => (
