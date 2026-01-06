@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { dummyEvents } from "@/data/events";
 import { Event, Outcome } from "@/types/event";
+import { createBet, saveBet } from "@/lib/bets";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -32,6 +33,16 @@ function FormattedDate({ dateString }: { dateString: string }) {
 }
 
 function handleBet(event: Event, outcome: Outcome) {
+  const bet = createBet(
+    event.id,
+    event.name,
+    event.category,
+    event.date,
+    outcome.id,
+    outcome.name,
+    outcome.odds
+  );
+  saveBet(bet);
   console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}`);
 }
 
