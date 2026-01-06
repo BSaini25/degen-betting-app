@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import { Event } from "@/types/event";
 
 const CATEGORIES = [
@@ -14,7 +16,7 @@ const CATEGORIES = [
 export default function Admin() {
   const [eventName, setEventName] = useState("");
   const [category, setCategory] = useState(CATEGORIES[0]);
-  const [eventDate, setEventDate] = useState("");
+  const [eventDate, setEventDate] = useState<Date | null>(null);
   const [outcomes, setOutcomes] = useState(["", ""]);
 
   // TODO: Load only events created by the current user from storage
@@ -52,7 +54,7 @@ export default function Admin() {
     const newEvent: Event = {
       id: `evt-${Date.now()}`,
       name: eventName.trim(),
-      date: new Date(eventDate).toISOString(),
+      date: eventDate.toISOString(),
       category,
       outcomes: outcomes.map((name, index) => ({
         id: `outcome-${index}`,
@@ -70,7 +72,7 @@ export default function Admin() {
     // Reset form
     setEventName("");
     setCategory(CATEGORIES[0]);
-    setEventDate("");
+    setEventDate(null);
     setOutcomes(["", ""]);
   };
 
@@ -126,15 +128,18 @@ export default function Admin() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="eventDate">
-              Date & Time
-            </label>
-            <input
-              type="datetime-local"
-              id="eventDate"
+            <label className="form-label">Date & Time</label>
+            <DatePicker
+              selected={eventDate}
+              onChange={(date: Date | null) => setEventDate(date)}
+              showTimeSelect
+              timeFormat="HH:mm"
+              timeIntervals={15}
+              dateFormat="MMMM d, yyyy h:mm aa"
+              placeholderText="Select date and time"
               className="form-input"
-              value={eventDate}
-              onChange={(e) => setEventDate(e.target.value)}
+              wrapperClassName="datepicker-wrapper"
+              minDate={new Date()}
             />
           </div>
 
