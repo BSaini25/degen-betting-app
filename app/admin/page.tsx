@@ -1,23 +1,102 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select, { StylesConfig } from "react-select";
 import { Event } from "@/types/event";
 
-const CATEGORIES = [
-    "Foosball",
-    "Pool",
-    "Poker",
-    "Table Tennis",
-    "Other",
+type CategoryOption = {
+  value: string;
+  label: string;
+};
+
+const selectStyles: StylesConfig<CategoryOption, false> = {
+  control: (base, state) => ({
+    ...base,
+    background: "var(--bg-secondary)",
+    borderColor: state.isFocused ? "var(--accent)" : "var(--border)",
+    borderRadius: "10px",
+    padding: "0.25rem 0.25rem",
+    boxShadow: "none",
+    "&:hover": {
+      borderColor: "var(--accent)",
+    },
+  }),
+  menu: (base) => ({
+    ...base,
+    background: "var(--bg-card)",
+    border: "1px solid var(--border)",
+    borderRadius: "10px",
+    overflow: "hidden",
+    boxShadow: "0 8px 32px rgba(0, 0, 0, 0.4)",
+  }),
+  menuList: (base) => ({
+    ...base,
+    padding: "0.25rem",
+  }),
+  option: (base, state) => ({
+    ...base,
+    background: state.isSelected
+      ? "var(--accent)"
+      : state.isFocused
+      ? "var(--bg-secondary)"
+      : "transparent",
+    color: "var(--text-primary)",
+    borderRadius: "6px",
+    cursor: "pointer",
+    "&:active": {
+      background: "var(--accent)",
+    },
+  }),
+  singleValue: (base) => ({
+    ...base,
+    color: "var(--text-primary)",
+  }),
+  placeholder: (base) => ({
+    ...base,
+    color: "var(--text-muted)",
+  }),
+  input: (base) => ({
+    ...base,
+    color: "var(--text-primary)",
+  }),
+  indicatorSeparator: () => ({
+    display: "none",
+  }),
+  dropdownIndicator: (base) => ({
+    ...base,
+    color: "var(--text-secondary)",
+    "&:hover": {
+      color: "var(--text-primary)",
+    },
+  }),
+};
+
+const CATEGORY_OPTIONS: CategoryOption[] = [
+  { value: "Foosball", label: "Foosball" },
+  { value: "Pool", label: "Pool" },
+  { value: "Poker", label: "Poker" },
+  { value: "Table Tennis", label: "Table Tennis" },
+  { value: "Other", label: "Other" },
 ];
 
 export default function Admin() {
+  const [mounted, setMounted] = useState(false);
   const [eventName, setEventName] = useState("");
-  const [category, setCategory] = useState(CATEGORIES[0]);
+  const [category, setCategory] = useState<CategoryOption>(CATEGORY_OPTIONS[0]);
   const [eventDate, setEventDate] = useState<Date | null>(null);
   const [outcomes, setOutcomes] = useState(["", ""]);
+
+  /**
+   * Prevent hydration mismatch for react-select and react-datepicker.
+   * These components render differently on server vs client, so we only
+   * render them after the component has mounted on the client.
+   */
+  useEffect(function onMount() {
+    // Using requestAnimationFrame to defer setState and avoid lint warning
+    requestAnimationFrame(() => setMounted(true));
+  }, []);
 
   // TODO: Load only events created by the current user from storage
   // Each user should only see and manage their own events here
@@ -55,7 +134,7 @@ export default function Admin() {
       id: `evt-${Date.now()}`,
       name: eventName.trim(),
       date: eventDate.toISOString(),
-      category,
+      category: category.value,
       outcomes: outcomes.map((name, index) => ({
         id: `outcome-${index}`,
         name: name.trim(),
@@ -71,7 +150,7 @@ export default function Admin() {
 
     // Reset form
     setEventName("");
-    setCategory(CATEGORIES[0]);
+    setCategory(CATEGORY_OPTIONS[0]);
     setEventDate(null);
     setOutcomes(["", ""]);
   };
@@ -110,37 +189,35 @@ export default function Admin() {
           </div>
 
           <div className="form-group">
-            <label className="form-label" htmlFor="category">
-              Category
-            </label>
-            <select
-              id="category"
-              className="form-input form-select"
-              value={category}
-              onChange={(e) => setCategory(e.target.value)}
-            >
-              {CATEGORIES.map((cat) => (
-                <option key={cat} value={cat}>
-                  {cat}
-                </option>
-              ))}
-            </select>
+            <label className="form-label">Category</label>
+            {mounted && (
+              <Select
+                value={category}
+                onChange={(option) => option && setCategory(option)}
+                options={CATEGORY_OPTIONS}
+                styles={selectStyles}
+                isSearchable={false}
+                placeholder="Select category"
+              />
+            )}
           </div>
 
           <div className="form-group">
             <label className="form-label">Date & Time</label>
-            <DatePicker
-              selected={eventDate}
-              onChange={(date: Date | null) => setEventDate(date)}
-              showTimeSelect
-              timeFormat="HH:mm"
-              timeIntervals={15}
-              dateFormat="MMMM d, yyyy h:mm aa"
-              placeholderText="Select date and time"
-              className="form-input"
-              wrapperClassName="datepicker-wrapper"
-              minDate={new Date()}
-            />
+            {mounted && (
+              <DatePicker
+                selected={eventDate}
+                onChange={(date: Date | null) => setEventDate(date)}
+                showTimeSelect
+                timeFormat="HH:mm"
+                timeIntervals={15}
+                dateFormat="MMMM d, yyyy h:mm aa"
+                placeholderText="Select date and time"
+                className="form-input"
+                wrapperClassName="datepicker-wrapper"
+                minDate={new Date()}
+              />
+            )}
           </div>
 
           <div className="form-group">
