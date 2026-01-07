@@ -4,6 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { getEventById } from "@/data/events";
 import { Event, Outcome } from "@/types/event";
+import { placeBet, getMoney, BET_COST, STARTING_MONEY } from "@/lib/bets";
 import Link from "next/link";
 
 function formatDate(dateString: string): string {
@@ -41,20 +42,60 @@ function isEventLive(event: Event): boolean {
   return eventDate >= oneHourAgo && eventDate <= now;
 }
 
-function handleBet(event: Event, outcome: Outcome) {
-  console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}`);
-  // TODO: Implement bet placement logic
-}
-
 export default function EventDetailPage() {
   const params = useParams();
   const eventId = params.eventId as string;
   const event = getEventById(eventId);
+  const [money, setMoney] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      return getMoney();
+    }
+    return STARTING_MONEY;
+  });
+
+  useEffect(() => {
+    // Update money display when it changes
+    const handleStorageChange = () => {
+      setMoney(getMoney());
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also check periodically for changes (for same-tab updates)
+    const interval = setInterval(() => {
+      setMoney(getMoney());
+    }, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const isLive = useMemo(() => {
     if (typeof window === 'undefined' || !event) return false;
     return isEventLive(event);
   }, [event]);
+
+  function handleBet(event: Event, outcome: Outcome) {
+    const success = placeBet(
+      event.id,
+      event.name,
+      event.category,
+      event.date,
+      outcome.id,
+      outcome.name,
+      outcome.odds
+    );
+
+    if (!success) {
+      alert(`Insufficient funds! You need ${BET_COST} money to place a bet. Current balance: ${getMoney()}`);
+      return;
+    }
+
+    // Update money display after successful bet
+    setMoney(getMoney());
+    console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
+  }
 
   if (!event) {
     return (
@@ -76,6 +117,9 @@ export default function EventDetailPage() {
         <Link href="/" className="back-link">
           ← Back to Events
         </Link>
+        <div style={{ marginTop: "0.5rem", fontSize: "1.1rem", fontWeight: "600" }}>
+          Balance: {money} money
+        </div>
       </div>
 
       <div className="event-detail-card">
