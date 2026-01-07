@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { dummyEvents } from "@/data/events";
 import { Event, Outcome } from "@/types/event";
 import { placeBet, getMoney, BET_COST, STARTING_MONEY } from "@/lib/bets";
@@ -51,20 +53,51 @@ function handleBet(event: Event, outcome: Outcome) {
   console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
 }
 
+/**
+ * Checks if an event is currently live (started within the last hour)
+ */
+function isEventLive(event: Event): boolean {
+  const eventDate = new Date(event.date);
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  return eventDate >= oneHourAgo && eventDate <= now;
+}
+
 function EventCard({ event, onBet }: { event: Event; onBet: (event: Event, outcome: Outcome) => void }) {
+  const [isLive, setIsLive] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setIsLive(isEventLive(event));
+  }, [event]);
+
+  const handleOutcomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/events/${event.id}`);
+  };
+
   return (
-    <div className="event-card">
-      <div className="event-info">
-        <span className="event-category">{event.category}</span>
-        <h2 className="event-name">{event.name}</h2>
-        <p className="event-date"><FormattedDate dateString={event.date} /></p>
-      </div>
+    <Link href={`/events/${event.id}`} className="event-card-link">
+      <div className="event-card">
+        <div className="event-info">
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <span className="event-category">{event.category}</span>
+            {isLive && (
+              <span className="live-indicator" title="Live">
+                <span className="live-dot"></span>
+              </span>
+            )}
+          </div>
+          <h2 className="event-name">{event.name}</h2>
+          <p className="event-date"><FormattedDate dateString={event.date} /></p>
+        </div>
       <div className="event-outcomes">
         {event.outcomes.map((outcome) => (
           <button
             key={outcome.id}
             className="outcome-btn"
-            onClick={() => onBet(event, outcome)}
+            onClick={handleOutcomeClick}
           >
             <span className="outcome-name">{outcome.name}</span>
             <span className="outcome-odds">{outcome.odds.toFixed(2)}</span>
@@ -72,6 +105,7 @@ function EventCard({ event, onBet }: { event: Event; onBet: (event: Event, outco
         ))}
       </div>
     </div>
+    </Link>
   );
 }
 
