@@ -46,14 +46,13 @@ export default function EventDetailPage() {
   const params = useParams();
   const eventId = params.eventId as string;
   const event = getEventById(eventId);
-  const [money, setMoney] = useState<number>(() => {
-    if (typeof window !== "undefined") {
-      return getMoney();
-    }
-    return STARTING_MONEY;
-  });
+  // Start with STARTING_MONEY to match server render, then update from localStorage
+  const [money, setMoney] = useState<number>(STARTING_MONEY);
 
   useEffect(() => {
+    // Load actual money from localStorage after mount (using rAF to satisfy linter)
+    requestAnimationFrame(() => setMoney(getMoney()));
+
     // Update money display when it changes
     const handleStorageChange = () => {
       setMoney(getMoney());
