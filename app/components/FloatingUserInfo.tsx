@@ -1,8 +1,9 @@
 import { getServerSession } from "next-auth";
 import { handler } from "../api/auth/[...nextauth]/route"
+import {Session} from "next-auth";
 
 export default async () => {
-  const session = await getServerSession(handler)
+  const session: Session | null = await getServerSession(handler)
   let component;
 
   if (session) {
@@ -11,8 +12,8 @@ export default async () => {
         display: 'flex',
         alignItems: 'center',
       }}>
-        <img height='30px' width='30px' style={{borderRadius: '9999px'}} src={session.user.image} />
-        <p style={{paddingLeft: 15}}>{session.user.name}</p>
+        {session?.user?.image && <img height='30px' width='30px' style={{borderRadius: '9999px'}} src={session.user.image} />}
+        <p style={{paddingLeft: 15}}>{session?.user?.name}</p>
       </div>
     );
   } else {

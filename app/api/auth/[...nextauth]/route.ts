@@ -18,15 +18,6 @@ const handler = NextAuth({
       },
     }),
   ],
-  callbacks: {
-    async signIn({ account, profile }) {
-      if (account.provider === "google") {
-        return profile.email_verified && profile.email.endsWith("@securitycompass.com")
-      }
-      return true;
-    },
-
-  },
   theme: {
     brandColor: "#7f5af0",
   }
