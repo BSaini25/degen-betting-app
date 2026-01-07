@@ -1,9 +1,11 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { dummyEvents } from "@/data/events";
-import { Event, Outcome } from "@/types/event";
-import { placeBet, getMoney, BET_COST, STARTING_MONEY } from "@/lib/bets";
+import { Event } from "@/types/event";
+import { getMoney, STARTING_MONEY } from "@/lib/bets";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -32,39 +34,51 @@ function FormattedDate({ dateString }: { dateString: string }) {
   return <>{formatted}</>;
 }
 
-function handleBet(event: Event, outcome: Outcome) {
-  const success = placeBet(
-    event.id,
-    event.name,
-    event.category,
-    event.date,
-    outcome.id,
-    outcome.name,
-    outcome.odds
-  );
-
-  if (!success) {
-    alert(`Insufficient funds! You need ${BET_COST} money to place a bet. Current balance: ${getMoney()}`);
-    return;
-  }
-
-  console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
+/**
+ * Checks if an event is currently live (started within the last hour)
+ */
+function isEventLive(event: Event): boolean {
+  const eventDate = new Date(event.date);
+  const now = new Date();
+  const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000);
+  return eventDate >= oneHourAgo && eventDate <= now;
 }
 
-function EventCard({ event, onBet }: { event: Event; onBet: (event: Event, outcome: Outcome) => void }) {
+function EventCard({ event }: { event: Event }) {
+  const [isLive, setIsLive] = useState(false);
+  const router = useRouter();
+
+  useEffect(() => {
+    setIsLive(isEventLive(event));
+  }, [event]);
+
+  const handleOutcomeClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    router.push(`/events/${event.id}`);
+  };
+
   return (
-    <div className="event-card">
-      <div className="event-info">
-        <span className="event-category">{event.category}</span>
-        <h2 className="event-name">{event.name}</h2>
-        <p className="event-date"><FormattedDate dateString={event.date} /></p>
-      </div>
+    <Link href={`/events/${event.id}`} className="event-card-link">
+      <div className="event-card">
+        <div className="event-info">
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+            <span className="event-category">{event.category}</span>
+            {isLive && (
+              <span className="live-indicator" title="Live">
+                <span className="live-dot"></span>
+              </span>
+            )}
+          </div>
+          <h2 className="event-name">{event.name}</h2>
+          <p className="event-date"><FormattedDate dateString={event.date} /></p>
+        </div>
       <div className="event-outcomes">
         {event.outcomes.map((outcome) => (
           <button
             key={outcome.id}
             className="outcome-btn"
-            onClick={() => onBet(event, outcome)}
+            onClick={handleOutcomeClick}
           >
             <span className="outcome-name">{outcome.name}</span>
             <span className="outcome-odds">{outcome.odds.toFixed(2)}</span>
@@ -72,6 +86,7 @@ function EventCard({ event, onBet }: { event: Event; onBet: (event: Event, outco
         ))}
       </div>
     </div>
+    </Link>
   );
 }
 
@@ -101,12 +116,6 @@ export default function Home() {
     };
   }, []);
 
-  // Update money when a bet is placed (same tab)
-  const handleBetWithUpdate = (event: Event, outcome: Outcome) => {
-    handleBet(event, outcome);
-    setMoney(getMoney());
-  };
-
   return (
     <div className="app-container">
       <header className="app-header">
@@ -119,7 +128,7 @@ export default function Home() {
 
       <main className="events-list">
         {dummyEvents.map((event) => (
-          <EventCard key={event.id} event={event} onBet={handleBetWithUpdate} />
+          <EventCard key={event.id} event={event} />
         ))}
       </main>
     </div>
