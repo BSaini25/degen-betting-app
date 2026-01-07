@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { dummyEvents } from "@/data/events";
 import { Event, Outcome } from "@/types/event";
+import { placeBet, getMoney, BET_COST, STARTING_MONEY } from "@/lib/bets";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -32,10 +33,25 @@ function FormattedDate({ dateString }: { dateString: string }) {
 }
 
 function handleBet(event: Event, outcome: Outcome) {
-  console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}`);
+  const success = placeBet(
+    event.id,
+    event.name,
+    event.category,
+    event.date,
+    outcome.id,
+    outcome.name,
+    outcome.odds
+  );
+
+  if (!success) {
+    alert(`Insufficient funds! You need ${BET_COST} money to place a bet. Current balance: ${getMoney()}`);
+    return;
+  }
+
+  console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
 }
 
-function EventCard({ event }: { event: Event }) {
+function EventCard({ event, onBet }: { event: Event; onBet: (event: Event, outcome: Outcome) => void }) {
   return (
     <div className="event-card">
       <div className="event-info">
@@ -48,7 +64,7 @@ function EventCard({ event }: { event: Event }) {
           <button
             key={outcome.id}
             className="outcome-btn"
-            onClick={() => handleBet(event, outcome)}
+            onClick={() => onBet(event, outcome)}
           >
             <span className="outcome-name">{outcome.name}</span>
             <span className="outcome-odds">{outcome.odds.toFixed(2)}</span>
@@ -60,16 +76,50 @@ function EventCard({ event }: { event: Event }) {
 }
 
 export default function Home() {
+  const [money, setMoney] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      return getMoney();
+    }
+    return STARTING_MONEY;
+  });
+
+  useEffect(() => {
+    // Update money display when it changes
+    const handleStorageChange = () => {
+      setMoney(getMoney());
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also check periodically for changes (for same-tab updates)
+    const interval = setInterval(() => {
+      setMoney(getMoney());
+    }, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Update money when a bet is placed (same tab)
+  const handleBetWithUpdate = (event: Event, outcome: Outcome) => {
+    handleBet(event, outcome);
+    setMoney(getMoney());
+  };
+
   return (
     <div className="app-container">
       <header className="app-header">
         <h1 className="app-title">Degen Bets</h1>
         <p className="app-subtitle">Place your bets on upcoming events</p>
+        <div style={{ marginTop: "0.5rem", fontSize: "1.1rem", fontWeight: "600" }}>
+          Balance: {money} money
+        </div>
       </header>
 
       <main className="events-list">
         {dummyEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
+          <EventCard key={event.id} event={event} onBet={handleBetWithUpdate} />
         ))}
       </main>
     </div>
