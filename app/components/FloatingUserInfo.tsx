@@ -11,7 +11,7 @@ export default async () => {
         display: 'flex',
         alignItems: 'center',
       }}>
-        <img height='30px' width='30px' src={session.user.image} />
+        <img height='30px' width='30px' style={{borderRadius: '9999px'}} src={session.user.image} />
         <p style={{paddingLeft: 15}}>{session.user.name}</p>
       </div>
     );
@@ -25,10 +25,10 @@ export default async () => {
       top: '20px',
       right: '20px',
       zIndex: 1000,
-      padding: '15px 25px',
-      backgroundColor: '#007bff',
+      padding: '10px 20px',
+      backgroundColor: '#7f5af0',
       color: '#fff',
-      borderRadius: '8px',
+      borderRadius: '9999px',
       boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
       fontWeight: 'bold',
     }}>

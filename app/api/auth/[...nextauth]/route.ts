@@ -27,6 +27,9 @@ const handler = NextAuth({
     },
 
   },
+  theme: {
+    brandColor: "#7f5af0",
+  }
 });
 
 export { handler as GET, handler as POST, handler };
