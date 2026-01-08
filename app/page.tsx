@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { dummyEvents } from "@/data/events";
 import { Event } from "@/types/event";
-import { getMoney, STARTING_MONEY } from "@/lib/bets";
+import { STARTING_MONEY } from "@/lib/bets";
 import { getEvents } from "@/lib/events";
 
 function formatDate(dateString: string): string {
@@ -102,7 +102,7 @@ function EventCard({ event }: { event: Event }) {
 }
 
 export default function Home() {
-  // Start with STARTING_MONEY to match server render, then update from localStorage
+  // Start with STARTING_MONEY to match server render, then update from API
   const [money, setMoney] = useState<number>(STARTING_MONEY);
   // Combine dummy events with user-created events from localStorage
   const [allEvents, setAllEvents] = useState<Event[]>(dummyEvents);
@@ -117,29 +117,37 @@ export default function Home() {
     ? allEvents.filter((e) => e.category === selectedCategory)
     : allEvents;
 
+  // Function to fetch user money from the API
+  const fetchUserMoney = async () => {
+    try {
+      const response = await fetch("/api/user");
+      if (response.ok) {
+        const userData = await response.json();
+        setMoney(userData.money);
+      } else {
+        console.error("Failed to fetch user money:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching user money:", error);
+    }
+  };
+
   useEffect(() => {
-    // Load actual money and events from localStorage after mount
-    const loadFromStorage = () => {
-      setMoney(getMoney());
+    // Load events from localStorage and money from API after mount
+    const loadData = async () => {
       const createdEvents = getEvents();
       setAllEvents([...dummyEvents, ...createdEvents]);
+      await fetchUserMoney();
     };
 
-    requestAnimationFrame(loadFromStorage);
+    loadData();
 
-    // Update when storage changes
-    const handleStorageChange = () => {
-      loadFromStorage();
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    // Also check periodically for changes (for same-tab updates)
+    // Periodically refresh money from database
     const interval = setInterval(() => {
-      loadFromStorage();
-    }, 1000);
+      fetchUserMoney();
+    }, 2000);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
   }, []);

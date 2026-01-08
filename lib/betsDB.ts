@@ -6,7 +6,7 @@ const STORAGE_KEY = "degen-bets";
 const MONEY_STORAGE_KEY = "degen-money";
 
 // Constants for money management
-export const STARTING_MONEY = 1000;
+export const STARTING_MONEY = 0;
 export const BET_COST = 100;
 
 /**
