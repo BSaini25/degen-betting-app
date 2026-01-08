@@ -106,6 +106,16 @@ export default function Home() {
   const [money, setMoney] = useState<number>(STARTING_MONEY);
   // Combine dummy events with user-created events from localStorage
   const [allEvents, setAllEvents] = useState<Event[]>(dummyEvents);
+  // Category filter state (null = show all)
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  // Get unique categories from all events
+  const categories = Array.from(new Set(allEvents.map((e) => e.category))).sort();
+
+  // Filter events based on selected category
+  const filteredEvents = selectedCategory
+    ? allEvents.filter((e) => e.category === selectedCategory)
+    : allEvents;
 
   useEffect(() => {
     // Load actual money and events from localStorage after mount
@@ -144,10 +154,34 @@ export default function Home() {
         </div>
       </header>
 
-      <main className="events-list">
-        {allEvents.map((event) => (
-          <EventCard key={event.id} event={event} />
+      <div className="category-filter">
+        <button
+          className={`filter-tab ${selectedCategory === null ? "active" : ""}`}
+          onClick={() => setSelectedCategory(null)}
+        >
+          All
+        </button>
+        {categories.map((category) => (
+          <button
+            key={category}
+            className={`filter-tab ${selectedCategory === category ? "active" : ""}`}
+            onClick={() => setSelectedCategory(category)}
+          >
+            {category}
+          </button>
         ))}
+      </div>
+
+      <main className="events-list">
+        {filteredEvents.length === 0 ? (
+          <div className="no-events">
+            <p>No events found in this category</p>
+          </div>
+        ) : (
+          filteredEvents.map((event) => (
+            <EventCard key={event.id} event={event} />
+          ))
+        )}
       </main>
     </div>
   );
