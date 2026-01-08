@@ -5,6 +5,7 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select, { StylesConfig } from "react-select";
 import { Event } from "@/types/event";
+import { getEvents, saveEvent, deleteEvent } from "@/lib/events";
 
 type CategoryOption = {
   value: string;
@@ -98,9 +99,29 @@ export default function Admin() {
     requestAnimationFrame(() => setMounted(true));
   }, []);
 
-  // TODO: Load only events created by the current user from storage
-  // Each user should only see and manage their own events here
+  // Start with empty array to match server render, then load from localStorage
   const [myCreatedEvents, setMyCreatedEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    // Load events from localStorage after mount
+    setMyCreatedEvents(getEvents());
+
+    // Listen for storage changes (in case events are added from another tab)
+    const handleStorageChange = () => {
+      setMyCreatedEvents(getEvents());
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // Also check periodically for changes (for same-tab updates)
+    const interval = setInterval(() => {
+      setMyCreatedEvents(getEvents());
+    }, 1000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+    };
+  }, []);
 
   const addOutcome = () => {
     setOutcomes([...outcomes, ""]);
@@ -142,10 +163,10 @@ export default function Admin() {
       })),
     };
 
-    // TODO: Save event to storage
-    console.log("Event created:", newEvent);
+    // Save event to localStorage
+    saveEvent(newEvent);
 
-    // For now, just add to local state (will be replaced with storage)
+    // Update local state
     setMyCreatedEvents([...myCreatedEvents, newEvent]);
 
     // Reset form
@@ -156,10 +177,10 @@ export default function Admin() {
   };
 
   const handleDelete = (eventId: string) => {
-    // TODO: Delete event from storage (only allowed for events created by current user)
-    console.log("Delete event:", eventId);
+    // Delete event from localStorage
+    deleteEvent(eventId);
 
-    // For now, just remove from local state (will be replaced with storage)
+    // Update local state
     setMyCreatedEvents(myCreatedEvents.filter((e) => e.id !== eventId));
   };
 

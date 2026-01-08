@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { dummyEvents } from "@/data/events";
 import { Event } from "@/types/event";
 import { getMoney, STARTING_MONEY } from "@/lib/bets";
+import { getEvents } from "@/lib/events";
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString);
@@ -93,20 +94,28 @@ function EventCard({ event }: { event: Event }) {
 export default function Home() {
   // Start with STARTING_MONEY to match server render, then update from localStorage
   const [money, setMoney] = useState<number>(STARTING_MONEY);
+  // Combine dummy events with user-created events from localStorage
+  const [allEvents, setAllEvents] = useState<Event[]>(dummyEvents);
 
   useEffect(() => {
-    // Load actual money from localStorage after mount (using rAF to satisfy linter)
-    requestAnimationFrame(() => setMoney(getMoney()));
-
-    // Update money display when it changes
-    const handleStorageChange = () => {
+    // Load actual money and events from localStorage after mount
+    const loadFromStorage = () => {
       setMoney(getMoney());
+      const createdEvents = getEvents();
+      setAllEvents([...dummyEvents, ...createdEvents]);
+    };
+
+    requestAnimationFrame(loadFromStorage);
+
+    // Update when storage changes
+    const handleStorageChange = () => {
+      loadFromStorage();
     };
     window.addEventListener("storage", handleStorageChange);
 
     // Also check periodically for changes (for same-tab updates)
     const interval = setInterval(() => {
-      setMoney(getMoney());
+      loadFromStorage();
     }, 1000);
 
     return () => {
@@ -126,7 +135,7 @@ export default function Home() {
       </header>
 
       <main className="events-list">
-        {dummyEvents.map((event) => (
+        {allEvents.map((event) => (
           <EventCard key={event.id} event={event} />
         ))}
       </main>

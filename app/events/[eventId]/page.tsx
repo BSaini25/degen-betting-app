@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { getEventById } from "@/data/events";
 import { Event, Outcome } from "@/types/event";
+import { getEventById } from "@/lib/events";
 import { placeBet, getMoney, BET_COST, STARTING_MONEY } from "@/lib/bets";
 import Link from "next/link";
 
@@ -45,17 +45,25 @@ function isEventLive(event: Event): boolean {
 export default function EventDetailPage() {
   const params = useParams();
   const eventId = params.eventId as string;
-  const event = getEventById(eventId);
   // Start with STARTING_MONEY to match server render, then update from localStorage
   const [money, setMoney] = useState<number>(STARTING_MONEY);
+  const [event, setEvent] = useState<Event | undefined>(undefined);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Load actual money from localStorage after mount (using rAF to satisfy linter)
-    requestAnimationFrame(() => setMoney(getMoney()));
+    // Load event and money from localStorage after mount
+    const loadFromStorage = () => {
+      setMoney(getMoney());
+      setEvent(getEventById(eventId));
+      setIsLoading(false);
+    };
 
-    // Update money display when it changes
+    requestAnimationFrame(loadFromStorage);
+
+    // Update when storage changes
     const handleStorageChange = () => {
       setMoney(getMoney());
+      setEvent(getEventById(eventId));
     };
     window.addEventListener("storage", handleStorageChange);
 
@@ -68,7 +76,7 @@ export default function EventDetailPage() {
       window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
-  }, []);
+  }, [eventId]);
 
   const isLive = useMemo(() => {
     if (typeof window === 'undefined' || !event) return false;
@@ -94,6 +102,16 @@ export default function EventDetailPage() {
     // Update money display after successful bet
     setMoney(getMoney());
     console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
+  }
+
+  if (isLoading) {
+    return (
+      <div className="app-container">
+        <div className="event-detail-error">
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   if (!event) {
