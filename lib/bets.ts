@@ -57,10 +57,11 @@ export function placeBet(
   eventDate: string,
   outcomeId: string,
   outcomeName: string,
-  odds: number
+  odds: number,
+  amount: number = BET_COST
 ): boolean {
   // Check if user has enough money
-  if (!hasEnoughMoney()) {
+  if (!hasEnoughMoney(amount)) {
     return false;
   }
 
@@ -72,13 +73,14 @@ export function placeBet(
     eventDate,
     outcomeId,
     outcomeName,
-    odds
+    odds,
+    amount
   );
 
   // Save the bet and deduct money atomically
   try {
     saveBet(bet);
-    deductBetCost();
+    deductMoney(amount);
     return true;
   } catch (error) {
     console.error("Error placing bet:", error);
@@ -120,16 +122,16 @@ export function setMoney(amount: number): void {
 /**
  * Check if the user has enough money to place a bet
  */
-export function hasEnoughMoney(): boolean {
-  return getMoney() >= BET_COST;
+export function hasEnoughMoney(amount: number = BET_COST): boolean {
+  return getMoney() >= amount;
 }
 
 /**
- * Deduct the bet cost from the user's money
+ * Deduct an amount from the user's money
  */
-export function deductBetCost(): void {
+export function deductMoney(amount: number): void {
   const currentMoney = getMoney();
-  const newMoney = currentMoney - BET_COST;
+  const newMoney = currentMoney - amount;
   setMoney(newMoney);
 }
 
@@ -143,7 +145,8 @@ export function createBet(
   eventDate: string,
   outcomeId: string,
   outcomeName: string,
-  odds: number
+  odds: number,
+  amount: number
 ): Bet {
   return {
     id: `bet-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -154,6 +157,7 @@ export function createBet(
     outcomeId,
     outcomeName,
     odds,
+    amount,
     placedAt: new Date().toISOString(),
     status: "pending",
   };
@@ -230,7 +234,7 @@ export function resolveEvent(eventId: string, winningOutcomeId: string): void {
 
       if (bet.outcomeId === winningOutcomeId) {
         // Winning bet - mark as won and calculate payout
-        const payout = bet.odds * BET_COST;
+        const payout = bet.odds * bet.amount;
         addMoney(payout);
         return { ...bet, status: "won" as const };
       } else {
