@@ -49,6 +49,7 @@ export default function EventDetailPage() {
   const [money, setMoney] = useState<number>(STARTING_MONEY);
   const [event, setEvent] = useState<Event | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
+  const [betAmount, setBetAmount] = useState<number>(BET_COST);
 
   useEffect(() => {
     // Load event and money from localStorage after mount
@@ -84,6 +85,11 @@ export default function EventDetailPage() {
   }, [event]);
 
   function handleBet(event: Event, outcome: Outcome) {
+    if (betAmount <= 0) {
+      alert("Please enter a valid bet amount greater than 0");
+      return;
+    }
+
     const success = placeBet(
       event.id,
       event.name,
@@ -91,17 +97,18 @@ export default function EventDetailPage() {
       event.date,
       outcome.id,
       outcome.name,
-      outcome.odds
+      outcome.odds,
+      betAmount
     );
 
     if (!success) {
-      alert(`Insufficient funds! You need ${BET_COST} money to place a bet. Current balance: ${getMoney()}`);
+      alert(`Insufficient funds! You need ${betAmount} money to place a bet. Current balance: ${getMoney()}`);
       return;
     }
 
     // Update money display after successful bet
     setMoney(getMoney());
-    console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
+    console.log(`Bet of ${betAmount} placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
   }
 
   if (isLoading) {
@@ -176,6 +183,60 @@ export default function EventDetailPage() {
             <h2 className="outcomes-heading">
               {event.resolution ? "Outcomes" : "Place Your Bet"}
             </h2>
+            
+            {!event.resolution && (
+              <div className="bet-amount-section">
+                <label className="bet-amount-label" htmlFor="betAmount">
+                  Bet Amount
+                </label>
+                <div className="bet-amount-input-wrapper">
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    id="betAmount"
+                    className="bet-amount-input"
+                    value={betAmount}
+                    onChange={(e) => setBetAmount(Math.max(0, parseInt(e.target.value) || 0))}
+                  />
+                  <span className="bet-amount-currency">money</span>
+                  <div className="quick-add-buttons">
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 10)}
+                    >
+                      +10
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 25)}
+                    >
+                      +25
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 50)}
+                    >
+                      +50
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 100)}
+                    >
+                      +100
+                    </button>
+                  </div>
+                </div>
+                <p className="bet-amount-hint">
+                  Max: {money} money
+                </p>
+              </div>
+            )}
+
             <div className="outcomes-grid">
               {event.outcomes.map((outcome) => {
                 const isWinner = event.resolution?.winningOutcomeId === outcome.id;
@@ -188,7 +249,12 @@ export default function EventDetailPage() {
                   >
                     <div className="outcome-detail-content">
                       <span className="outcome-detail-name">{outcome.name}</span>
-                      <span className="outcome-detail-odds">{outcome.odds.toFixed(2)}</span>
+                      <span className="outcome-detail-odds">{outcome.odds.toFixed(2)}x</span>
+                      {!event.resolution && betAmount > 0 && (
+                        <span className="potential-payout">
+                          Win: {(outcome.odds * betAmount).toFixed(0)}
+                        </span>
+                      )}
                       {isWinner && <span className="winner-badge">Winner</span>}
                     </div>
                   </button>

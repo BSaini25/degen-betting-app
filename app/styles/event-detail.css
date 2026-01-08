@@ -87,6 +87,114 @@
   margin-bottom: 0.5rem;
 }
 
+/* Bet Amount Input */
+.bet-amount-section {
+  margin-bottom: 1.5rem;
+  padding: 1.25rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.bet-amount-label {
+  display: block;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  margin-bottom: 0.5rem;
+}
+
+.bet-amount-input-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.bet-amount-input {
+  flex: 1;
+  max-width: 200px;
+  padding: 0.75rem 1rem;
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--text-primary);
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  outline: none;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.bet-amount-input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.bet-amount-input::-webkit-inner-spin-button,
+.bet-amount-input::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.bet-amount-input[type="number"] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
+
+.bet-amount-currency {
+  font-size: 1rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+}
+
+.bet-amount-hint {
+  margin-top: 0.5rem;
+  font-size: 0.85rem;
+  color: var(--text-muted);
+}
+
+.quick-add-buttons {
+  display: flex;
+  gap: 0.5rem;
+  margin-left: auto;
+}
+
+.quick-add-btn {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-secondary);
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-add-btn:hover {
+  color: var(--text-primary);
+  background: var(--accent);
+  border-color: var(--accent);
+}
+
+.quick-add-btn:active {
+  transform: scale(0.95);
+}
+
+.potential-payout {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--success);
+  padding: 0.25rem 0.5rem;
+  background: rgba(44, 182, 125, 0.15);
+  border-radius: 6px;
+}
+
+.outcome-detail-btn:hover .potential-payout {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
+}
+
 .outcomes-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));

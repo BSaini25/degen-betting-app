@@ -20,6 +20,8 @@ export interface Bet {
   outcomeName: string;
   /** The odds when the bet was placed */
   odds: number;
+  /** The amount wagered */
+  amount: number;
   /** When the bet was placed (ISO 8601 string) */
   placedAt: string;
   /** Status of the bet */
