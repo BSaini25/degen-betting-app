@@ -331,7 +331,7 @@ export type BetCreateInput = {
   outcomeName: string
   odds: number
   placedAt?: Date | string
-  status?: string
+  status: string
 }
 
 export type BetUncheckedCreateInput = {
@@ -344,7 +344,7 @@ export type BetUncheckedCreateInput = {
   outcomeName: string
   odds: number
   placedAt?: Date | string
-  status?: string
+  status: string
 }
 
 export type BetUpdateInput = {
@@ -383,7 +383,7 @@ export type BetCreateManyInput = {
   outcomeName: string
   odds: number
   placedAt?: Date | string
-  status?: string
+  status: string
 }
 
 export type BetUpdateManyMutationInput = {

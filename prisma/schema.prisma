@@ -12,3 +12,16 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+model Bet {
+  id            String   @id @default(cuid())
+  eventId       String
+  eventName     String
+  eventCategory String
+  eventDate     String
+  outcomeId     String
+  outcomeName   String
+  odds          Float
+  placedAt      DateTime @default(now())
+  status        String
+}
