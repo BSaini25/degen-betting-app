@@ -12,6 +12,18 @@ export interface Outcome {
 }
 
 /**
+ * Represents resolution information for an event
+ */
+export interface EventResolution {
+  /** The ID of the winning outcome */
+  winningOutcomeId: string;
+  /** The name of the winning outcome */
+  winningOutcomeName: string;
+  /** When the event was resolved (ISO 8601 string) */
+  resolvedAt: string;
+}
+
+/**
  * Represents a game/match/tournament that users can bet on.
  * Contains multiple possible outcomes to bet on.
  */
@@ -26,5 +38,7 @@ export interface Event {
   category: string;
   /** Array of possible betting outcomes */
   outcomes: Outcome[];
+  /** Resolution information (if the event has been resolved) */
+  resolution?: EventResolution;
 }
 

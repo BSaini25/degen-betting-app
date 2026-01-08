@@ -50,6 +50,30 @@
   color: var(--text-secondary);
 }
 
+.event-resolution-info {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(44, 182, 125, 0.1);
+  border: 1px solid rgba(44, 182, 125, 0.3);
+  border-radius: 12px;
+}
+
+.resolution-winner {
+  font-size: 1rem;
+  color: var(--text-primary);
+  margin-bottom: 0.5rem;
+}
+
+.resolution-winner strong {
+  color: var(--success);
+  font-weight: 600;
+}
+
+.resolution-date {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 .event-detail-outcomes {
   display: flex;
   flex-direction: column;
@@ -122,6 +146,36 @@
 
 .outcome-detail-btn:hover .outcome-detail-odds {
   color: var(--text-primary);
+}
+
+.outcome-detail-btn.disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.outcome-detail-btn.disabled:hover {
+  background: var(--bg-secondary);
+  border-color: var(--border);
+  transform: none;
+  box-shadow: none;
+}
+
+.outcome-detail-btn.winner-outcome {
+  background: rgba(44, 182, 125, 0.15);
+  border-color: var(--success);
+}
+
+.winner-badge {
+  display: inline-block;
+  padding: 0.25rem 0.5rem;
+  background: var(--success);
+  color: white;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 6px;
+  margin-top: 0.25rem;
 }
 
 .event-detail-actions {

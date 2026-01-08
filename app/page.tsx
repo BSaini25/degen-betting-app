@@ -63,16 +63,26 @@ function EventCard({ event }: { event: Event }) {
     <Link href={`/events/${event.id}`} className="event-card-link">
       <div className="event-card">
         <div className="event-info">
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
             <span className="event-category">{event.category}</span>
             {isLive && (
               <span className="live-indicator" title="Live">
                 <span className="live-dot"></span>
               </span>
             )}
+            {event.resolution && (
+              <span className="resolved-indicator" title="Resolved">
+                ✓ {event.resolution.winningOutcomeName}
+              </span>
+            )}
           </div>
           <h2 className="event-name">{event.name}</h2>
           <p className="event-date"><FormattedDate dateString={event.date} /></p>
+          {event.resolution && (
+            <p className="event-resolution">
+              Winner: <strong>{event.resolution.winningOutcomeName}</strong>
+            </p>
+          )}
         </div>
       <div className="event-outcomes">
         {event.outcomes.map((outcome) => (
