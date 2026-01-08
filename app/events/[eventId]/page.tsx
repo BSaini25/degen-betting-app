@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Event, Outcome } from "@/types/event";
 import { getEventById } from "@/lib/events";
-import { getMoney, STARTING_MONEY } from "@/lib/bets";
+import { getMoney, STARTING_MONEY, BET_COST } from "@/lib/bets";
 import Link from "next/link";
 
 function formatDate(dateString: string): string {
@@ -87,6 +87,13 @@ export default function EventDetailPage() {
 
   async function handleBet(event: Event, outcome: Outcome) {
     if (isPlacingBet) return; // Prevent multiple simultaneous requests
+    
+    // Check if user has enough money before proceeding
+    const currentMoney = getMoney();
+    if (currentMoney < BET_COST) {
+      alert(`Insufficient funds! You need ${BET_COST} money to place a bet. Current balance: ${currentMoney}`);
+      return;
+    }
     
     setIsPlacingBet(true);
     
