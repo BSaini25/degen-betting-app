@@ -1,0 +1,58 @@
+/* Floating User Info */
+.floating-user-info {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  padding: 0.625rem 1.25rem;
+  background-color: var(--accent);
+  color: var(--text-primary);
+  border-radius: 9999px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  font-weight: 600;
+}
+
+.user-info-content {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-avatar {
+  width: 30px;
+  height: 30px;
+  border-radius: 9999px;
+}
+
+.user-name {
+  font-size: 0.9rem;
+}
+
+.sign-in-link {
+  color: var(--text-primary);
+  text-decoration: none;
+  font-size: 0.9rem;
+}
+
+.sign-in-link:hover {
+  text-decoration: underline;
+}
+
+/* Mobile: smaller and repositioned */
+@media (max-width: 640px) {
+  .floating-user-info {
+    top: 12px;
+    right: 12px;
+    padding: 0.5rem 1rem;
+    font-size: 0.85rem;
+  }
+
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+  }
+
+  .user-name {
+    display: none;
+  }
+}

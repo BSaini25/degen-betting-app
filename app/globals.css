@@ -56,6 +56,12 @@ body {
   padding-bottom: 6rem; /* Prevent nav overlap */
 }
 
+@media (max-width: 640px) {
+  .app-container {
+    padding-top: 3.5rem; /* Make room for floating user info */
+  }
+}
+
 /* Header */
 .app-header {
   margin-bottom: 1.5rem;
