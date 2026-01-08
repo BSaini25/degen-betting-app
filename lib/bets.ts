@@ -1,4 +1,6 @@
 import { Bet } from "@/types/bet";
+import { EventResolution } from "@/types/event";
+import { updateEventResolution, getEventById } from "./events";
 
 const STORAGE_KEY = "degen-bets";
 const MONEY_STORAGE_KEY = "degen-money";
@@ -155,5 +157,102 @@ export function createBet(
     placedAt: new Date().toISOString(),
     status: "pending",
   };
+}
+
+/**
+ * Get all bets for a specific event
+ */
+export function getBetsByEventId(eventId: string): Bet[] {
+  const allBets = getBets();
+  return allBets.filter((bet) => bet.eventId === eventId);
+}
+
+/**
+ * Update a bet's status
+ */
+export function updateBetStatus(betId: string, status: "won" | "lost"): void {
+  try {
+    const bets = getBets();
+    const updatedBets = bets.map((bet) =>
+      bet.id === betId ? { ...bet, status } : bet
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedBets));
+  } catch (error) {
+    console.error("Error updating bet status:", error);
+  }
+}
+
+/**
+ * Add money to the user's balance (for payouts)
+ */
+export function addMoney(amount: number): void {
+  const currentMoney = getMoney();
+  const newMoney = currentMoney + amount;
+  setMoney(newMoney);
+}
+
+/**
+ * Resolve an event by selecting a winning outcome
+ * This will:
+ * 1. Mark all bets on the winning outcome as "won"
+ * 2. Mark all bets on other outcomes as "lost"
+ * 3. Pay out winnings to winners (odds * BET_COST)
+ * 4. Save resolution information to the event
+ */
+export function resolveEvent(eventId: string, winningOutcomeId: string): void {
+  try {
+    // Get the event to find the winning outcome name
+    const event = getEventById(eventId);
+    if (!event) {
+      console.error("Event not found:", eventId);
+      return;
+    }
+
+    const winningOutcome = event.outcomes.find((o) => o.id === winningOutcomeId);
+    if (!winningOutcome) {
+      console.error("Winning outcome not found:", winningOutcomeId);
+      return;
+    }
+
+    const bets = getBets();
+    const eventBets = bets.filter((bet) => bet.eventId === eventId);
+    
+    if (eventBets.length === 0) {
+      console.log("No bets found for this event");
+      // Still save resolution even if no bets
+    }
+
+    // Update all bets and calculate payouts
+    const updatedBets = bets.map((bet) => {
+      if (bet.eventId !== eventId) {
+        return bet; // Not a bet for this event
+      }
+
+      if (bet.outcomeId === winningOutcomeId) {
+        // Winning bet - mark as won and calculate payout
+        const payout = bet.odds * BET_COST;
+        addMoney(payout);
+        return { ...bet, status: "won" as const };
+      } else {
+        // Losing bet - mark as lost
+        return { ...bet, status: "lost" as const };
+      }
+    });
+
+    // Save updated bets
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedBets));
+    
+    // Save resolution information to the event
+    const resolution: EventResolution = {
+      winningOutcomeId,
+      winningOutcomeName: winningOutcome.name,
+      resolvedAt: new Date().toISOString(),
+    };
+    updateEventResolution(eventId, resolution);
+    
+    console.log(`Event ${eventId} resolved. Winning outcome: ${winningOutcome.name}`);
+  } catch (error) {
+    console.error("Error resolving event:", error);
+  }
 }
 

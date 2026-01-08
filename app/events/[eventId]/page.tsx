@@ -150,28 +150,50 @@ export default function EventDetailPage() {
                   <span>LIVE</span>
                 </span>
               )}
+              {event.resolution && (
+                <span className="resolved-indicator" title="Resolved">
+                  ✓ Resolved
+                </span>
+              )}
             </div>
             <h1 className="event-detail-name">{event.name}</h1>
             <p className="event-detail-date">
               <FormattedDate dateString={event.date} />
             </p>
+            {event.resolution && (
+              <div className="event-resolution-info">
+                <p className="resolution-winner">
+                  Winner: <strong>{event.resolution.winningOutcomeName}</strong>
+                </p>
+                <p className="resolution-date">
+                  Resolved: <FormattedDate dateString={event.resolution.resolvedAt} />
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="event-detail-outcomes">
-            <h2 className="outcomes-heading">Place Your Bet</h2>
+            <h2 className="outcomes-heading">
+              {event.resolution ? "Outcomes" : "Place Your Bet"}
+            </h2>
             <div className="outcomes-grid">
-              {event.outcomes.map((outcome) => (
-                <button
-                  key={outcome.id}
-                  className="outcome-detail-btn"
-                  onClick={() => handleBet(event, outcome)}
-                >
-                  <div className="outcome-detail-content">
-                    <span className="outcome-detail-name">{outcome.name}</span>
-                    <span className="outcome-detail-odds">{outcome.odds.toFixed(2)}</span>
-                  </div>
-                </button>
-              ))}
+              {event.outcomes.map((outcome) => {
+                const isWinner = event.resolution?.winningOutcomeId === outcome.id;
+                return (
+                  <button
+                    key={outcome.id}
+                    className={`outcome-detail-btn ${isWinner ? "winner-outcome" : ""} ${event.resolution ? "disabled" : ""}`}
+                    onClick={() => !event.resolution && handleBet(event, outcome)}
+                    disabled={!!event.resolution}
+                  >
+                    <div className="outcome-detail-content">
+                      <span className="outcome-detail-name">{outcome.name}</span>
+                      <span className="outcome-detail-odds">{outcome.odds.toFixed(2)}</span>
+                      {isWinner && <span className="winner-badge">Winner</span>}
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
 

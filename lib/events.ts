@@ -1,4 +1,4 @@
-import { Event } from "@/types/event";
+import { Event, EventResolution } from "@/types/event";
 import { dummyEvents } from "@/data/events";
 
 const STORAGE_KEY = "degen-events";
@@ -42,6 +42,21 @@ export function deleteEvent(eventId: string): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(filtered));
   } catch (error) {
     console.error("Error deleting event from localStorage:", error);
+  }
+}
+
+/**
+ * Update an event's resolution information
+ */
+export function updateEventResolution(eventId: string, resolution: EventResolution): void {
+  try {
+    const events = getEvents();
+    const updatedEvents = events.map((event) =>
+      event.id === eventId ? { ...event, resolution } : event
+    );
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updatedEvents));
+  } catch (error) {
+    console.error("Error updating event resolution:", error);
   }
 }
 

@@ -6,6 +6,7 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select, { StylesConfig } from "react-select";
 import { Event } from "@/types/event";
 import { getEvents, saveEvent, deleteEvent } from "@/lib/events";
+import { resolveEvent, getBetsByEventId } from "@/lib/bets";
 
 type CategoryOption = {
   value: string;
@@ -101,20 +102,25 @@ export default function Admin() {
 
   // Start with empty array to match server render, then load from localStorage
   const [myCreatedEvents, setMyCreatedEvents] = useState<Event[]>([]);
+  const [resolvingEventId, setResolvingEventId] = useState<string | null>(null);
+  const [selectedWinningOutcome, setSelectedWinningOutcome] = useState<string>("");
 
   useEffect(() => {
     // Load events from localStorage after mount
-    setMyCreatedEvents(getEvents());
+    const loadEvents = () => {
+      setMyCreatedEvents(getEvents());
+    };
+    requestAnimationFrame(loadEvents);
 
     // Listen for storage changes (in case events are added from another tab)
     const handleStorageChange = () => {
-      setMyCreatedEvents(getEvents());
+      loadEvents();
     };
     window.addEventListener("storage", handleStorageChange);
 
     // Also check periodically for changes (for same-tab updates)
     const interval = setInterval(() => {
-      setMyCreatedEvents(getEvents());
+      loadEvents();
     }, 1000);
 
     return () => {
@@ -182,6 +188,40 @@ export default function Admin() {
 
     // Update local state
     setMyCreatedEvents(myCreatedEvents.filter((e) => e.id !== eventId));
+  };
+
+  const handleResolve = (eventId: string) => {
+    setResolvingEventId(eventId);
+    setSelectedWinningOutcome("");
+  };
+
+  const confirmResolve = () => {
+    if (!resolvingEventId || !selectedWinningOutcome) {
+      alert("Please select a winning outcome");
+      return;
+    }
+
+    // Check if there are any bets on this event
+    const bets = getBetsByEventId(resolvingEventId);
+    if (bets.length === 0) {
+      alert("No bets found for this event. Nothing to resolve.");
+      setResolvingEventId(null);
+      return;
+    }
+
+    // Resolve the event
+    resolveEvent(resolvingEventId, selectedWinningOutcome);
+
+    // Close the resolve dialog
+    setResolvingEventId(null);
+    setSelectedWinningOutcome("");
+
+    alert(`Event resolved! Winning outcome: ${selectedWinningOutcome}. Payouts have been made to winners.`);
+  };
+
+  const cancelResolve = () => {
+    setResolvingEventId(null);
+    setSelectedWinningOutcome("");
   };
 
   return (
@@ -293,19 +333,74 @@ export default function Admin() {
                     <p className="admin-event-outcomes">
                       {event.outcomes.map((o) => o.name).join(" vs ")}
                     </p>
+                    <p className="admin-event-bet-count">
+                      {getBetsByEventId(event.id).length} bet(s) placed
+                    </p>
                   </div>
-                  <button
-                    className="delete-btn"
-                    onClick={() => handleDelete(event.id)}
-                  >
-                    Delete
-                  </button>
+                  <div className="admin-event-actions">
+                    {!event.resolution && (
+                      <button
+                        className="resolve-btn"
+                        onClick={() => handleResolve(event.id)}
+                      >
+                        Resolve
+                      </button>
+                    )}
+                    {event.resolution && (
+                      <div className="resolved-badge">
+                        Resolved: {event.resolution.winningOutcomeName}
+                      </div>
+                    )}
+                    <button
+                      className="delete-btn"
+                      onClick={() => handleDelete(event.id)}
+                    >
+                      Delete
+                    </button>
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </section>
       </main>
+
+      {/* Resolve Event Modal */}
+      {resolvingEventId && (
+        <div className="modal-overlay" onClick={cancelResolve}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h2 className="modal-title">Resolve Event</h2>
+            <p className="modal-subtitle">
+              Select the winning outcome for this event. All bets will be marked as won or lost, and payouts will be made to winners.
+            </p>
+            <div className="form-group">
+              <label className="form-label">Winning Outcome</label>
+              <select
+                className="form-input"
+                value={selectedWinningOutcome}
+                onChange={(e) => setSelectedWinningOutcome(e.target.value)}
+              >
+                <option value="">Select outcome...</option>
+                {myCreatedEvents
+                  .find((e) => e.id === resolvingEventId)
+                  ?.outcomes.map((outcome) => (
+                    <option key={outcome.id} value={outcome.id}>
+                      {outcome.name} (odds: {outcome.odds.toFixed(2)}x)
+                    </option>
+                  ))}
+              </select>
+            </div>
+            <div className="modal-actions">
+              <button className="cancel-btn" onClick={cancelResolve}>
+                Cancel
+              </button>
+              <button className="confirm-btn" onClick={confirmResolve}>
+                Resolve Event
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
