@@ -13,10 +13,6 @@ export const BET_COST = 100;
  * Get all bets from localStorage
  */
 export function getBets(): Bet[] {
-  // if (typeof window === "undefined") {
-  //   return [];
-  // }
-
   try {
     const stored = localStorage.getItem(STORAGE_KEY);
     if (!stored) {
@@ -33,10 +29,6 @@ export function getBets(): Bet[] {
  * Save a bet to localStorage
  */
 export function saveBet(bet: Bet): void {
-  // if (typeof window === "undefined") {
-  //   return;
-  // }
-
   try {
     const bets = getBets();
     bets.push(bet);
