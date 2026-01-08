@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Event, Outcome } from "@/types/event";
 import { getEventById } from "@/lib/events";
-import { placeBet, getMoney, BET_COST, STARTING_MONEY } from "@/lib/bets";
+import { getMoney, STARTING_MONEY } from "@/lib/bets";
 import Link from "next/link";
 
 function formatDate(dateString: string): string {
@@ -50,6 +50,7 @@ export default function EventDetailPage() {
   const [event, setEvent] = useState<Event | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [betAmount, setBetAmount] = useState<number>(BET_COST);
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
 
   useEffect(() => {
     // Load event and money from localStorage after mount
@@ -84,31 +85,44 @@ export default function EventDetailPage() {
     return isEventLive(event);
   }, [event]);
 
-  function handleBet(event: Event, outcome: Outcome) {
-    if (betAmount <= 0) {
-      alert("Please enter a valid bet amount greater than 0");
-      return;
+  async function handleBet(event: Event, outcome: Outcome) {
+    if (isPlacingBet) return; // Prevent multiple simultaneous requests
+    
+    setIsPlacingBet(true);
+    
+    try {
+      const response = await fetch("/api/bet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          eventName: event.name,
+          eventCategory: event.category,
+          eventDate: event.date,
+          outcomeId: outcome.id,
+          outcomeName: outcome.name,
+          odds: outcome.odds,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.error || "Failed to place bet. Please try again.");
+        return;
+      }
+
+      // Update money display after successful bet
+      setMoney(getMoney());
+      console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
+    } catch (error) {
+      console.error("Error placing bet:", error);
+      alert("An error occurred while placing the bet. Please try again.");
+    } finally {
+      setIsPlacingBet(false);
     }
-
-    const success = placeBet(
-      event.id,
-      event.name,
-      event.category,
-      event.date,
-      outcome.id,
-      outcome.name,
-      outcome.odds,
-      betAmount
-    );
-
-    if (!success) {
-      alert(`Insufficient funds! You need ${betAmount} money to place a bet. Current balance: ${getMoney()}`);
-      return;
-    }
-
-    // Update money display after successful bet
-    setMoney(getMoney());
-    console.log(`Bet of ${betAmount} placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
   }
 
   if (isLoading) {
