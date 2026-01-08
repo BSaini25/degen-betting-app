@@ -200,6 +200,36 @@ export default function EventDetailPage() {
                     onChange={(e) => setBetAmount(Math.max(0, parseInt(e.target.value) || 0))}
                   />
                   <span className="bet-amount-currency">money</span>
+                  <div className="quick-add-buttons">
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 10)}
+                    >
+                      +10
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 25)}
+                    >
+                      +25
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 50)}
+                    >
+                      +50
+                    </button>
+                    <button
+                      type="button"
+                      className="quick-add-btn"
+                      onClick={() => setBetAmount(betAmount + 100)}
+                    >
+                      +100
+                    </button>
+                  </div>
                 </div>
                 <p className="bet-amount-hint">
                   Max: {money} money
