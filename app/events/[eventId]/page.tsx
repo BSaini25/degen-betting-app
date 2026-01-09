@@ -4,7 +4,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { Event, Outcome } from "@/types/event";
 import { getEventById } from "@/lib/events";
-import { placeBet, getMoney, BET_COST, STARTING_MONEY } from "@/lib/bets";
+import { STARTING_MONEY, BET_COST } from "@/lib/bets";
 import Link from "next/link";
 
 function formatDate(dateString: string): string {
@@ -45,36 +45,44 @@ function isEventLive(event: Event): boolean {
 export default function EventDetailPage() {
   const params = useParams();
   const eventId = params.eventId as string;
-  // Start with STARTING_MONEY to match server render, then update from localStorage
+  // Start with STARTING_MONEY to match server render, then update from API
   const [money, setMoney] = useState<number>(STARTING_MONEY);
   const [event, setEvent] = useState<Event | undefined>(undefined);
   const [isLoading, setIsLoading] = useState(true);
   const [betAmount, setBetAmount] = useState<number>(BET_COST);
+  const [isPlacingBet, setIsPlacingBet] = useState(false);
+
+  // Function to fetch user money from the API
+  const fetchUserMoney = async () => {
+    try {
+      const response = await fetch("/api/user");
+      if (response.ok) {
+        const userData = await response.json();
+        setMoney(userData.money);
+      } else {
+        console.error("Failed to fetch user money:", response.statusText);
+      }
+    } catch (error) {
+      console.error("Error fetching user money:", error);
+    }
+  };
 
   useEffect(() => {
-    // Load event and money from localStorage after mount
-    const loadFromStorage = () => {
-      setMoney(getMoney());
+    // Load event and money from API after mount
+    const loadData = async () => {
       setEvent(getEventById(eventId));
+      await fetchUserMoney();
       setIsLoading(false);
     };
 
-    requestAnimationFrame(loadFromStorage);
+    loadData();
 
-    // Update when storage changes
-    const handleStorageChange = () => {
-      setMoney(getMoney());
-      setEvent(getEventById(eventId));
-    };
-    window.addEventListener("storage", handleStorageChange);
-
-    // Also check periodically for changes (for same-tab updates)
+    // Periodically refresh money from database
     const interval = setInterval(() => {
-      setMoney(getMoney());
-    }, 1000);
+      fetchUserMoney();
+    }, 2000);
 
     return () => {
-      window.removeEventListener("storage", handleStorageChange);
       clearInterval(interval);
     };
   }, [eventId]);
@@ -84,31 +92,50 @@ export default function EventDetailPage() {
     return isEventLive(event);
   }, [event]);
 
-  function handleBet(event: Event, outcome: Outcome) {
-    if (betAmount <= 0) {
-      alert("Please enter a valid bet amount greater than 0");
+  async function handleBet(event: Event, outcome: Outcome) {
+    if (isPlacingBet) return; // Prevent multiple simultaneous requests
+    
+    // Check if user has enough money before proceeding
+    if (money < BET_COST) {
+      alert(`Insufficient funds! You need ${BET_COST} money to place a bet. Current balance: ${money}`);
       return;
     }
+    
+    setIsPlacingBet(true);
+    
+    try {
+      const response = await fetch("/api/bet", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          eventId: event.id,
+          eventName: event.name,
+          eventCategory: event.category,
+          eventDate: event.date,
+          outcomeId: outcome.id,
+          outcomeName: outcome.name,
+          odds: outcome.odds,
+        }),
+      });
 
-    const success = placeBet(
-      event.id,
-      event.name,
-      event.category,
-      event.date,
-      outcome.id,
-      outcome.name,
-      outcome.odds,
-      betAmount
-    );
+      const data = await response.json();
 
-    if (!success) {
-      alert(`Insufficient funds! You need ${betAmount} money to place a bet. Current balance: ${getMoney()}`);
-      return;
+      if (!response.ok) {
+        alert(data.error || "Failed to place bet. Please try again.");
+        return;
+      }
+
+      // Update money display after successful bet by fetching from API
+      await fetchUserMoney();
+      console.log(`Bet placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}.`);
+    } catch (error) {
+      console.error("Error placing bet:", error);
+      alert("An error occurred while placing the bet. Please try again.");
+    } finally {
+      setIsPlacingBet(false);
     }
-
-    // Update money display after successful bet
-    setMoney(getMoney());
-    console.log(`Bet of ${betAmount} placed on "${outcome.name}" for event "${event.name}" at odds ${outcome.odds}. Remaining balance: ${getMoney()}`);
   }
 
   if (isLoading) {
