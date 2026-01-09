@@ -29,6 +29,7 @@ export async function getBetsFromDatabase(): Promise<Bet[]> {
       outcomeId: bet.outcomeId,
       outcomeName: bet.outcomeName,
       odds: bet.odds,
+      amount: BET_COST, // Default to BET_COST since schema doesn't have amount yet
       placedAt: bet.placedAt.toISOString(),
       status: bet.status as "pending" | "won" | "lost",
     }));
@@ -189,7 +190,8 @@ export function createBet(
   eventDate: string,
   outcomeId: string,
   outcomeName: string,
-  odds: number
+  odds: number,
+  amount: number = BET_COST
 ): Bet {
   return {
     id: `bet-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -200,6 +202,7 @@ export function createBet(
     outcomeId,
     outcomeName,
     odds,
+    amount,
     placedAt: new Date().toISOString(),
     status: "pending",
   };
