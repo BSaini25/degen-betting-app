@@ -18,7 +18,6 @@ export async function GET() {
     }
 
     // Find user in database by email
-    // @ts-expect-error - Prisma client types may not include User model in generated types, but it exists at runtime
     const user = await prisma.user.findUnique({
       where: {
         email: session.user.email,
